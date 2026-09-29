@@ -6,9 +6,106 @@ A run writes one dated folder. Source files keep their real names. Services, rou
 
 This is not a second Git history. It is the kit you rebuild from if the remotes are gone.
 
-## GitHub description
+## Install
 
-Daily rebuild snapshots of microservices, routes, and middleware. One shared root, a map of trees, checksums, and an agent bundle. Requires one USB daily and two on Friday.
+Python 3.9 or newer. The standard library is enough. There is no package to install.
+
+```bash
+git clone https://github.com/hydrobolix/Rebuild-Kit.git
+cd Rebuild-Kit
+python3 rebuild_kit.py --help
+```
+
+The window is optional and is a separate Linux x86_64 binary, `rebuild-kit-gui`. It is not produced by the clone. After you place that binary next to the script:
+
+```bash
+chmod +x rebuild-kit-gui
+./rebuild-kit-gui
+```
+
+## Set up
+
+Do this once. It writes the path list the run commands read.
+
+```bash
+cp services.example.json services.json
+```
+
+Edit `services.json`. `path` is the real directory on the machine that will run the snapshot. `name` is only the label in `MAP.txt`. `kind` is one of:
+
+- `service` — a microservice
+- `middleware` — a route, gateway, filter, or other shared path
+- `root` — the top folder, mapped and copied whole
+
+Services plus middleware:
+
+```json
+{
+  "keep_days": 7,
+  "keep_fridays": 2,
+  "services": [
+    {"name": "payments", "kind": "service", "path": "/src/platform/services/payments"},
+    {"name": "orders", "kind": "service", "path": "/src/platform/services/orders"},
+    {"name": "auth", "kind": "middleware", "path": "/src/platform/middleware/auth"}
+  ]
+}
+```
+
+Top root instead of individual folders:
+
+```json
+{
+  "keep_days": 7,
+  "keep_fridays": 2,
+  "services": [
+    {"name": "platform", "kind": "root", "path": "/src/platform"}
+  ]
+}
+```
+
+Plug in the dock stick. Confirm the tool can see it:
+
+```bash
+python3 rebuild_kit.py drives
+```
+
+Use the mount it prints, usually `/media/$USER/USB-A`, as `--usb` below. `services.json` stays on the machine. It is not copied to the stick.
+
+In the window, setup is the path list instead of the file: Add top root, or Add service, then Add route / middleware. Those paths are remembered. Refresh until the dock stick appears.
+
+## Run
+
+The dock stick must be mounted. The job exits non-zero if it is missing, not a mount, or not writable.
+
+Daily snapshot, 6pm:
+
+```bash
+python3 rebuild_kit.py snapshot \
+  --config services.json \
+  --out "$HOME/backups" \
+  --usb /media/$USER/USB-A \
+  --keep 7
+```
+
+Friday, both sticks mounted. Same drive twice is rejected.
+
+```bash
+python3 rebuild_kit.py friday \
+  --config services.json \
+  --out "$HOME/backups" \
+  --usb-a /media/$USER/USB-A \
+  --usb-b /media/$USER/USB-B
+```
+
+Omit the USB flags to pick from the drives that are plugged in. The first successful copy labels the dock stick `A` in `REBUILD-KIT-ROLE.txt` on the drive root. Friday labels the second stick `B`. Seven dated folders are kept on the machine and on the dock stick.
+
+In the window, check one drive and press Daily snapshot. Check two drives and press Friday, both sticks. The other button stays disabled.
+
+Verify a day:
+
+```bash
+python3 rebuild_kit.py verify ~/backups/2026-09-28
+```
 
 ## What a day looks like
 
@@ -29,74 +126,6 @@ backups/2026-09-28/
 `MAP.txt` has one section per path you added. A top root is mapped and copied whole. Separate service and middleware folders are placed under their shared parent, not flattened into twenty kits.
 
 Skipped on every run: `.git`, `node_modules`, `vendor`, `dist`, build caches, and secret names (`.env`, `*.pem`, `*.key`, `id_rsa`, `credentials.json`, and the rest of the default list). Symlinks are not followed.
-
-## Window
-
-`rebuild-kit-gui` is the operator app. Linux x86_64. After download, `chmod +x rebuild-kit-gui`.
-
-- Add top root, or add each microservice, then add routes and middleware.
-- Those paths are remembered.
-- Refresh lists only USB drives that are plugged in.
-- Daily snapshot stays disabled until exactly one drive is checked.
-- Friday stays disabled until exactly two different drives are checked.
-
-## Command line
-
-Python 3.9+ and the standard library. No install step.
-
-```bash
-cp services.example.json services.json
-# edit paths; set "kind" to service, middleware, or root
-```
-
-```json
-{
-  "keep_days": 7,
-  "keep_fridays": 2,
-  "services": [
-    {"name": "payments", "kind": "service", "path": "/src/platform/services/payments"},
-    {"name": "orders", "kind": "service", "path": "/src/platform/services/orders"},
-    {"name": "auth", "kind": "middleware", "path": "/src/platform/middleware/auth"}
-  ]
-}
-```
-
-A top root instead of the individual folders:
-
-```json
-{"name": "platform", "kind": "root", "path": "/src/platform"}
-```
-
-Daily, 6pm. The dock stick must be mounted. The job exits non-zero if it is missing, not a mount, or not writable.
-
-```bash
-python3 rebuild_kit.py drives
-python3 rebuild_kit.py snapshot \
-  --config services.json \
-  --out "$HOME/backups" \
-  --usb /media/$USER/USB-A \
-  --keep 7
-```
-
-The first successful copy labels that stick `A` in `REBUILD-KIT-ROLE.txt` on the drive root. Seven dated folders are kept on the machine and on the dock stick.
-
-Friday requires both sticks. Same drive twice is rejected. Both copies are verified, then labeled A and B.
-
-```bash
-python3 rebuild_kit.py friday \
-  --config services.json \
-  --out "$HOME/backups" \
-  --usb-a /media/$USER/USB-A \
-  --usb-b /media/$USER/USB-B
-```
-
-Omit the USB flags to pick from the drives that are plugged in.
-
-## Verify
-
-```bash
-python3 rebuild_kit.py verify ~/backups/2026-09-28
-```
 
 ## Restore
 
