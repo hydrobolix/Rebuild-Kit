@@ -1,6 +1,3 @@
-# Rebuild-Kit
-Daily rebuild snapshots of microservices, routes, and middleware. One shared root, a map of trees, checksums, and an agent bundle. Requires one USB daily and two on Friday.
-
 # rebuild-kit
 
 Daily rebuild snapshots for microservices, routes, and middleware when Git may not be there.
@@ -8,6 +5,10 @@ Daily rebuild snapshots for microservices, routes, and middleware when Git may n
 A run writes one dated folder. Source files keep their real names. Services, routes, middleware, and other shared paths are copied under one root, and each path is appended as its own tree in `MAP.txt`. The local folder is the first copy. A dock USB must be plugged in for the daily copy. Friday refuses to finish unless two different sticks are mounted.
 
 This is not a second Git history. It is the kit you rebuild from if the remotes are gone.
+
+## GitHub description
+
+Daily rebuild snapshots of microservices, routes, and middleware. One shared root, a map of trees, checksums, and an agent bundle. Requires one USB daily and two on Friday.
 
 ## What a day looks like
 
